@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth.dart';
+import '../models/http_exception.dart';
 
 enum AuthMode { Signup, Login }
 
@@ -45,6 +45,7 @@ class AuthScreen extends StatelessWidget {
                           EdgeInsets.symmetric(vertical: 8.0, horizontal: 94.0),
                       transform: Matrix4.rotationZ(-8 * pi / 180)
                         ..translate(-10.0),
+                      // ..translate(-10.0),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         color: Colors.deepOrange.shade900,
@@ -91,7 +92,8 @@ class AuthCard extends StatefulWidget {
   _AuthCardState createState() => _AuthCardState();
 }
 
-class _AuthCardState extends State<AuthCard> {
+class _AuthCardState extends State<AuthCard>
+    with SingleTickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey();
   AuthMode _authMode = AuthMode.Login;
   Map<String, String> _authData = {
@@ -100,18 +102,55 @@ class _AuthCardState extends State<AuthCard> {
   };
   var _isLoading = false;
   final _passwordController = TextEditingController();
+  AnimationController _controller;
+  Animation<Offset> _slideAnimation;
+  Animation<double> _opacityAnimation;
 
-  void _showErrorDialog(String mMessage) {
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(
+        milliseconds: 300,
+      ),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, -1.5),
+      end: Offset(0, 0),
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.fastOutSlowIn,
+      ),
+    );
+    _opacityAnimation = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeIn,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
+  void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('An Error Occured!'),
-        content: Text(mMessage),
+        title: Text('An Error Occurred!'),
+        content: Text(message),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
             child: Text('Okay'),
-          ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          )
         ],
       ),
     );
@@ -129,7 +168,7 @@ class _AuthCardState extends State<AuthCard> {
     try {
       if (_authMode == AuthMode.Login) {
         // Log user in
-        await Provider.of<Auth>(context, listen: false).signin(
+        await Provider.of<Auth>(context, listen: false).login(
           _authData['email'],
           _authData['password'],
         );
@@ -141,23 +180,22 @@ class _AuthCardState extends State<AuthCard> {
         );
       }
     } on HttpException catch (error) {
-      var errorMessage = 'Authentication Failed';
+      var errorMessage = 'Authentication failed';
       if (error.toString().contains('EMAIL_EXISTS')) {
-        errorMessage = 'The email address is already in use by another account.';
-      } else if (error.toString().contains('OPERATION_NOT_ALLOWED')) {
-        errorMessage = 'Password sign-in is disabled for this project.';
-      } else if (error.toString().contains('TOO_MANY_ATTEMPTS_TRY_LATER')) {
-        errorMessage = 'We have blocked all requests from this device due to unusual activity. Try again later.';
-      } else if (error.toString().contains('USER_DISABLED')) {
-        errorMessage = 'The user account has been disabled by an administrator.';
+        errorMessage = 'This email address is already in use.';
+      } else if (error.toString().contains('INVALID_EMAIL')) {
+        errorMessage = 'This is not a valid email address';
+      } else if (error.toString().contains('WEAK_PASSWORD')) {
+        errorMessage = 'This password is too weak.';
       } else if (error.toString().contains('EMAIL_NOT_FOUND')) {
-        errorMessage = 'There is no user record corresponding to this identifier. The user may have been deleted.';
+        errorMessage = 'Could not find a user with that email.';
       } else if (error.toString().contains('INVALID_PASSWORD')) {
-        errorMessage = 'The password is invalid or the user does not have a password.';
+        errorMessage = 'Invalid password.';
       }
       _showErrorDialog(errorMessage);
-    } catch (e) {
-      const errorMessage = 'Could Not Authenticate You. Please Try Again Later';
+    } catch (error) {
+      const errorMessage =
+          'Could not authenticate you. Please try again later.';
       _showErrorDialog(errorMessage);
     }
 
@@ -171,10 +209,12 @@ class _AuthCardState extends State<AuthCard> {
       setState(() {
         _authMode = AuthMode.Signup;
       });
+      _controller.forward();
     } else {
       setState(() {
         _authMode = AuthMode.Login;
       });
+      _controller.reverse();
     }
   }
 
@@ -186,8 +226,11 @@ class _AuthCardState extends State<AuthCard> {
         borderRadius: BorderRadius.circular(10.0),
       ),
       elevation: 8.0,
-      child: Container(
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
         height: _authMode == AuthMode.Signup ? 320 : 260,
+        // height: _heightAnimation.value.height,
         constraints:
             BoxConstraints(minHeight: _authMode == AuthMode.Signup ? 320 : 260),
         width: deviceSize.width * 0.75,
@@ -224,20 +267,34 @@ class _AuthCardState extends State<AuthCard> {
                     _authData['password'] = value;
                   },
                 ),
-                if (_authMode == AuthMode.Signup)
-                  TextFormField(
-                    enabled: _authMode == AuthMode.Signup,
-                    decoration: InputDecoration(labelText: 'Confirm Password'),
-                    obscureText: true,
-                    validator: _authMode == AuthMode.Signup
-                        // ignore: missing_return
-                        ? (value) {
-                            if (value != _passwordController.text) {
-                              return 'Passwords do not match!';
-                            }
-                          }
-                        : null,
+                AnimatedContainer(
+                  constraints: BoxConstraints(
+                    minHeight: _authMode == AuthMode.Signup ? 60 : 0,
+                    maxHeight: _authMode == AuthMode.Signup ? 120 : 0,
                   ),
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeIn,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: TextFormField(
+                        enabled: _authMode == AuthMode.Signup,
+                        decoration:
+                            InputDecoration(labelText: 'Confirm Password'),
+                        obscureText: true,
+                        validator: _authMode == AuthMode.Signup
+                            // ignore: missing_return
+                            ? (value) {
+                                if (value != _passwordController.text) {
+                                  return 'Passwords do not match!';
+                                }
+                              }
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
                 SizedBox(
                   height: 20,
                 ),
@@ -254,21 +311,23 @@ class _AuthCardState extends State<AuthCard> {
                       ),
                       padding:
                           EdgeInsets.symmetric(horizontal: 30.0, vertical: 8.0),
-                      primary: Theme.of(context).primaryColor,
                       textStyle: TextStyle(
-                          color:
-                              Theme.of(context).primaryTextTheme.button.color),
+                        color: Theme.of(context).primaryTextTheme.button.color,
+                        backgroundColor: Theme.of(context).primaryColor,
+                      ),
                     ),
                   ),
                 TextButton(
                   child: Text(
                       '${_authMode == AuthMode.Login ? 'SIGNUP' : 'LOGIN'} INSTEAD'),
                   onPressed: _switchAuthMode,
-                  style: ElevatedButton.styleFrom(
+                  style: TextButton.styleFrom(
                     padding:
                         EdgeInsets.symmetric(horizontal: 30.0, vertical: 4),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    textStyle: TextStyle(color: Theme.of(context).primaryColor),
+                    textStyle: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                 ),
               ],

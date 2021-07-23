@@ -3,12 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import './product.dart';
 import '../models/http_exception.dart';
+import './product.dart';
 
 class Products with ChangeNotifier {
   List<Product> _items = [];
-
   final String authToken;
   final String userId;
 
@@ -37,7 +36,7 @@ class Products with ChangeNotifier {
         return;
       }
       url =
-          'https://flutter-update-e5e5a-default-rtdb.firebaseio.com/userFavorite/$userId.json?auth=$authToken';
+          'https://flutter-update-e5e5a-default-rtdb.firebaseio.com/userFavorites/$userId.json?auth=$authToken';
       final favoriteResponse = await http.get(Uri.parse(url));
       final favoriteData = json.decode(favoriteResponse.body);
       final List<Product> loadedProducts = [];
@@ -98,7 +97,7 @@ class Products with ChangeNotifier {
             'title': newProduct.title,
             'description': newProduct.description,
             'imageUrl': newProduct.imageUrl,
-            'price': newProduct.price,
+            'price': newProduct.price
           }));
       _items[prodIndex] = newProduct;
       notifyListeners();
@@ -118,7 +117,7 @@ class Products with ChangeNotifier {
     if (response.statusCode >= 400) {
       _items.insert(existingProductIndex, existingProduct);
       notifyListeners();
-      throw HTTPException('Coud Not Delete Product.');
+      throw HttpException('Could not delete product.');
     }
     existingProduct = null;
   }

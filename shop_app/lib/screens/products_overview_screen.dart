@@ -31,22 +31,17 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
   @override
   void didChangeDependencies() {
     if (_isInit) {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+      });
       Provider.of<Products>(context).fetchAndSetProducts().then((_) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
       });
     }
     _isInit = false;
     super.didChangeDependencies();
-  }
-
-  Future<void> _refreshProducts(BuildContext ctx) async {
-    await Provider.of<Products>(ctx, listen: false).fetchAndSetProducts();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   @override
@@ -69,21 +64,21 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
               Icons.more_vert,
             ),
             itemBuilder: (_) => [
-              PopupMenuItem(
-                child: Text('Only Favorites'),
-                value: FilterOptions.Favorites,
-              ),
-              PopupMenuItem(
-                child: Text('Show All'),
-                value: FilterOptions.All,
-              ),
-            ],
+                  PopupMenuItem(
+                    child: Text('Only Favorites'),
+                    value: FilterOptions.Favorites,
+                  ),
+                  PopupMenuItem(
+                    child: Text('Show All'),
+                    value: FilterOptions.All,
+                  ),
+                ],
           ),
           Consumer<Cart>(
             builder: (_, cart, ch) => Badge(
-              child: ch,
-              value: cart.itemCount.toString(),
-            ),
+                  child: ch,
+                  value: cart.itemCount.toString(),
+                ),
             child: IconButton(
               icon: Icon(
                 Icons.shopping_cart,
@@ -100,12 +95,7 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
           ? Center(
               child: CircularProgressIndicator(),
             )
-          : RefreshIndicator(
-              onRefresh: () => _refreshProducts(context),
-              child: ProductsGrid(
-                _showOnlyFavorites,
-              ),
-            ),
+          : ProductsGrid(_showOnlyFavorites),
     );
   }
 }

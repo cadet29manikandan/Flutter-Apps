@@ -8,9 +8,9 @@ class TextControl extends StatefulWidget {
     return _TextControlState();
   }
 }
- 
+
 class _TextControlState extends State<TextControl> {
-  String _mainText = 'This is the first assignment!';
+  String _mainText = 'Text Change Assignment!';
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class _TextControlState extends State<TextControl> {
         ElevatedButton(
           onPressed: () {
             setState(() {
-              _mainText = 'This changed!';
+              _mainText = 'This Changed!';
             });
           },
           child: Text('Change Text'),

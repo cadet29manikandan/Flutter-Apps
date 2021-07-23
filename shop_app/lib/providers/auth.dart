@@ -10,14 +10,14 @@ import '../models/http_exception.dart';
 class Auth with ChangeNotifier {
   String _token;
   DateTime _expiryDate;
-  String _userID;
+  String _userId;
   Timer _authTimer;
 
   bool get isAuth {
-    return authToken != null;
+    return token != null;
   }
 
-  String get authToken {
+  String get token {
     if (_expiryDate != null &&
         _expiryDate.isAfter(DateTime.now()) &&
         _token != null) {
@@ -27,35 +27,34 @@ class Auth with ChangeNotifier {
   }
 
   String get userId {
-    return _userID;
+    return _userId;
   }
 
   Future<void> _authenticate(
-      String mEmail, String mPassword, String mURLSegment) async {
+      String email, String password, String urlSegment) async {
     final url =
-        'https://identitytoolkit.googleapis.com/v1/accounts:$mURLSegment?key=AIzaSyBx_1SP3Hz7A0LFECebAnbpCJ5DRFyaseU';
+        'https://identitytoolkit.googleapis.com/v1/accounts:$urlSegment?key=AIzaSyBx_1SP3Hz7A0LFECebAnbpCJ5DRFyaseU';
     try {
       final response = await http.post(
         Uri.parse(url),
         body: json.encode(
           {
-            'email': mEmail,
-            'password': mPassword,
+            'email': email,
+            'password': password,
             'returnSecureToken': true,
           },
         ),
       );
-      final responseDate = json.decode(response.body);
-      print(responseDate);
-      if (responseDate['error'] != null) {
-        throw HTTPException(responseDate['error']['message']);
+      final responseData = json.decode(response.body);
+      if (responseData['error'] != null) {
+        throw HttpException(responseData['error']['message']);
       }
-      _token = responseDate['idToken'];
-      _userID = responseDate['localId'];
+      _token = responseData['idToken'];
+      _userId = responseData['localId'];
       _expiryDate = DateTime.now().add(
         Duration(
           seconds: int.parse(
-            responseDate['expiresIn'],
+            responseData['expiresIn'],
           ),
         ),
       );
@@ -65,26 +64,26 @@ class Auth with ChangeNotifier {
       final userData = json.encode(
         {
           'token': _token,
-          'userId': _userID,
+          'userId': _userId,
           'expiryDate': _expiryDate.toIso8601String(),
         },
       );
       prefs.setString('userData', userData);
-    } catch (e) {
-      throw e;
+    } catch (error) {
+      throw error;
     }
   }
 
-  Future<void> signup(String mEmail, String mPassword) async {
-    return _authenticate(mEmail, mPassword, 'signUp');
+  Future<void> signup(String email, String password) async {
+    return _authenticate(email, password, 'signUp');
   }
 
-  Future<void> signin(String mEmail, String mPassword) async {
-    return _authenticate(mEmail, mPassword, 'signInWithPassword');
+  Future<void> login(String email, String password) async {
+    return _authenticate(email, password, 'signInWithPassword');
   }
 
   Future<bool> tryAutoLogin() async {
-    final prefs = await SharedPreferences.getInstance();  
+    final prefs = await SharedPreferences.getInstance();
     if (!prefs.containsKey('userData')) {
       return false;
     }
@@ -95,7 +94,7 @@ class Auth with ChangeNotifier {
       return false;
     }
     _token = extractedUserData['token'];
-    _userID = extractedUserData['userId'];
+    _userId = extractedUserData['userId'];
     _expiryDate = expiryDate;
     notifyListeners();
     _autoLogout();
@@ -104,7 +103,7 @@ class Auth with ChangeNotifier {
 
   Future<void> logout() async {
     _token = null;
-    _userID = null;
+    _userId = null;
     _expiryDate = null;
     if (_authTimer != null) {
       _authTimer.cancel();

@@ -12,7 +12,8 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(
           title: Text('Assignment 01'),
         ),
-      body: TextControl(),),
+        body: TextControl(),
+      ),
     );
   }
 }

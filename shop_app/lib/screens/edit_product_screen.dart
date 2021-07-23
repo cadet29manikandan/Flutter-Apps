@@ -102,17 +102,17 @@ class _EditProductScreenState extends State<EditProductScreen> {
         await showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('An error occurred!'),
-            content: Text('Something went wrong.'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('Okay'),
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                },
-              )
-            ],
-          ),
+                title: Text('An Error Occurred!'),
+                content: Text('Something Went Wrong.'),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text('Okay'),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                  )
+                ],
+              ),
         );
       }
     }
@@ -153,7 +153,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       },
                       validator: (value) {
                         if (value.isEmpty) {
-                          return 'Please provide a value.';
+                          return 'Please Provide A Value.';
                         }
                         return null;
                       },
@@ -179,13 +179,13 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       },
                       validator: (value) {
                         if (value.isEmpty) {
-                          return 'Please enter a price.';
+                          return 'Please Enter A Price.';
                         }
                         if (double.tryParse(value) == null) {
-                          return 'Please enter a valid number.';
+                          return 'Please Enter A Valid Number.';
                         }
                         if (double.parse(value) <= 0) {
-                          return 'Please enter a number greater than zero.';
+                          return 'Please Enter A Number Greater Than Zero.';
                         }
                         return null;
                       },
@@ -207,10 +207,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       focusNode: _descriptionFocusNode,
                       validator: (value) {
                         if (value.isEmpty) {
-                          return 'Please enter a description.';
+                          return 'Please Enter A Description.';
                         }
                         if (value.length < 10) {
-                          return 'Should be at least 10 characters long.';
+                          return 'Should Be At Least 10 Characters Long.';
                         }
                         return null;
                       },
@@ -242,7 +242,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             ),
                           ),
                           child: _imageUrlController.text.isEmpty
-                              ? Text('Enter a URL')
+                              ? Text('Enter A URL')
                               : FittedBox(
                                   child: Image.network(
                                     _imageUrlController.text,
@@ -262,16 +262,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             },
                             validator: (value) {
                               if (value.isEmpty) {
-                                return 'Please enter an image URL.';
+                                return 'Please Enter An Image URL.';
                               }
                               if (!value.startsWith('http') &&
                                   !value.startsWith('https')) {
-                                return 'Please enter a valid URL.';
+                                return 'Please Enter A Valid URL.';
                               }
                               if (!value.endsWith('.png') &&
                                   !value.endsWith('.jpg') &&
                                   !value.endsWith('.jpeg')) {
-                                return 'Please enter a valid image URL.';
+                                return 'Please Enter A Valid Image URL.';
                               }
                               return null;
                             },
